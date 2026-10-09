@@ -31,11 +31,16 @@ jobs:
           ISSUE_TITLE: ${{ github.event.issue.title }}
           ISSUE_BODY: ${{ github.event.issue.body }}
         run: |
-          python -c "
+          python3 - << 'EOF'
           import os, glob, re
           from google import genai
 
-          client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
+          api_key = os.environ.get('GEMINI_API_KEY')
+          if not api_key:
+              print("Error: GEMINI_API_KEY is missing")
+              exit(1)
+
+          client = genai.Client(api_key=api_key)
           
           issue_title = os.environ.get('ISSUE_TITLE', '')
           issue_body = os.environ.get('ISSUE_BODY', '')
@@ -43,15 +48,15 @@ jobs:
           code_context = ''
           for ext in ['*.tsx', '*.jsx', '*.js', '*.ts', '*.html', '*.json']:
               for filepath in glob.glob(f'**/{ext}', recursive=True):
-                  if 'node_modules' in filepath or '.next' in filepath:
+                  if 'node_modules' in filepath or '.next' in filepath or '.git' in filepath:
                       continue
                   try:
                       with open(filepath, 'r', encoding='utf-8') as f:
                           code_context += f'\n--- FILE: {filepath} ---\n' + f.read()
-                  except Exception as e:
+                  except Exception:
                       pass
 
-          prompt = f'''You are an expert full-stack developer managing this project.
+          prompt = f"""You are an expert full-stack developer managing this project.
           
           User Request / Issue Title: {issue_title}
           Detailed Instructions: {issue_body}
@@ -63,12 +68,12 @@ jobs:
           1. Modify or add the necessary files according to the request.
           2. Return your file updates using the EXACT format:
           FILE: <file_path>
-          \`\`\`
+          ```
           <file_content>
-          \`\`\`
+          ```
 
           Provide complete working updated file content without omitting code.
-          '''
+          """
 
           response = client.models.generate_content(
               model='gemini-2.5-flash',
@@ -76,15 +81,16 @@ jobs:
           )
 
           text = response.text
-          matches = re.findall(r'FILE:\s*([^\n]+)\n\`\`\`[a-zA-Z]*\n(.*?)\n\`\`\`', text, re.DOTALL)
+          matches = re.findall(r'FILE:\s*([^\n]+)\n```[a-zA-Z]*\n(.*?)\n```', text, re.DOTALL)
           
           for filepath, content in matches:
               filepath = filepath.strip()
-              os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
+              if os.path.dirname(filepath):
+                  os.makedirs(os.path.dirname(filepath), exist_ok=True)
               with open(filepath, 'w', encoding='utf-8') as f:
                   f.write(content.strip())
               print(f'Successfully updated: {filepath}')
-          "
+          EOF
 
       - name: Commit and Push Changes
         run: |
