@@ -67,11 +67,13 @@ jobs:
 
           try:
               response = client.models.generate_content(
-                  model='gemini-2.5-flash',
+                  model='gemini-3.8-flash',
                   contents=prompt
               )
               text = response.text
               matches = re.findall(r'FILE:\s*([^\n]+)\n```[a-zA-Z]*\n(.*?)\n```', text, re.DOTALL)
+              if not matches:
+                  print("No file matches found in Gemini response.")
               for filepath, content in matches:
                   filepath = filepath.strip()
                   if os.path.dirname(filepath):
