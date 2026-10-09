@@ -32,42 +32,42 @@ export function Hero() {
           </a>
 
           <h1 className="animate-fade-up mt-6 text-balance text-4xl font-semibold leading-[1.05] tracking-tight [animation-delay:80ms] sm:text-6xl md:text-7xl">
-            Ship AI agents that <span className="text-gradient">actually work</span> in production
+            My Smart <span className="text-gradient">AI Platform</span>
           </h1>
 
           <p className="animate-fade-up mx-auto mt-6 max-w-xl text-pretty text-base leading-relaxed text-muted-foreground [animation-delay:160ms] md:text-lg">
             Nexvibe gives your team one platform to design, evaluate, and scale intelligent agents — with real-time
-            observability, guardrails, and every model behind a single API.
+            observability, guardrails, and everything you need to ship with confidence.
           </p>
 
-          <div className="animate-fade-up mt-9 flex flex-col items-center justify-center gap-3 [animation-delay:240ms] sm:flex-row">
+          <div className="animate-fade-up mt-8 flex flex-wrap items-center justify-center gap-3 [animation-delay:240ms]">
             <a
               href="#pricing"
-              className="group inline-flex w-full items-center justify-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground transition-all hover:shadow-[0_0_40px_-6px] hover:shadow-primary/80 sm:w-auto"
+              className="inline-flex items-center gap-2 rounded-full bg-primary px-6 py-3 text-sm font-medium text-primary-foreground shadow-lg shadow-primary/25 transition-all hover:shadow-[0_0_32px_-4px] hover:shadow-primary/70"
             >
-              Start free trial
-              <ArrowRight className="size-4 transition-transform group-hover:translate-x-0.5" aria-hidden="true" />
+              Start building free
+              <ArrowRight className="size-4" aria-hidden="true" />
             </a>
             <a
-              href="#showcase"
-              className="glass inline-flex w-full items-center justify-center gap-2 rounded-full px-6 py-3 text-sm font-medium transition-colors hover:bg-foreground/10 sm:w-auto"
+              href="#demo"
+              className="glass inline-flex items-center gap-2 rounded-full px-5 py-3 text-sm font-medium text-foreground transition-colors hover:bg-foreground/10"
             >
               <PlayCircle className="size-4 text-primary" aria-hidden="true" />
-              See it in action
+              Watch demo
             </a>
           </div>
 
-          <dl className="animate-fade-up mx-auto mt-12 grid max-w-lg grid-cols-3 gap-4 [animation-delay:320ms]">
+          <dl className="animate-fade-up mt-12 grid grid-cols-3 gap-4 border-y border-foreground/10 py-6 [animation-delay:320ms]">
             {STATS.map((stat) => (
-              <div key={stat.label} className="flex flex-col-reverse gap-1">
-                <dt className="text-xs text-muted-foreground">{stat.label}</dt>
-                <dd className="font-mono text-xl font-semibold md:text-2xl">{stat.value}</dd>
+              <div key={stat.label}>
+                <dt className="font-mono text-2xl font-semibold tracking-tight md:text-3xl text-gradient">{stat.value}</dt>
+                <dd className="mt-1 text-xs text-muted-foreground md:text-sm">{stat.label}</dd>
               </div>
             ))}
           </dl>
         </div>
 
-        <div className="animate-fade-up mt-16 [animation-delay:420ms] md:mt-20">
+        <div className="mt-14">
           <DashboardPreview />
         </div>
       </div>
