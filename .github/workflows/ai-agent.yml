@@ -1,0 +1,103 @@
+name: Gemini AI Website Agent
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  ai-code-update:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      issues: write
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.10'
+
+      - name: Install Dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install google-genai
+
+      - name: Run Gemini Agent
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          ISSUE_TITLE: ${{ github.event.issue.title }}
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        run: |
+          python -c "
+          import os, glob, re
+          from google import genai
+
+          client = genai.Client(api_key=os.environ['GEMINI_API_KEY'])
+          
+          issue_title = os.environ.get('ISSUE_TITLE', '')
+          issue_body = os.environ.get('ISSUE_BODY', '')
+          
+          code_context = ''
+          for ext in ['*.tsx', '*.jsx', '*.js', '*.ts', '*.html', '*.json']:
+              for filepath in glob.glob(f'**/{ext}', recursive=True):
+                  if 'node_modules' in filepath or '.next' in filepath:
+                      continue
+                  try:
+                      with open(filepath, 'r', encoding='utf-8') as f:
+                          code_context += f'\n--- FILE: {filepath} ---\n' + f.read()
+                  except Exception as e:
+                      pass
+
+          prompt = f'''You are an expert full-stack developer managing this project.
+          
+          User Request / Issue Title: {issue_title}
+          Detailed Instructions: {issue_body}
+
+          Current Repository Code Context:
+          {code_context[:30000]}
+
+          Instructions:
+          1. Modify or add the necessary files according to the request.
+          2. Return your file updates using the EXACT format:
+          FILE: <file_path>
+          \`\`\`
+          <file_content>
+          \`\`\`
+
+          Provide complete working updated file content without omitting code.
+          '''
+
+          response = client.models.generate_content(
+              model='gemini-2.5-flash',
+              contents=prompt
+          )
+
+          text = response.text
+          matches = re.findall(r'FILE:\s*([^\n]+)\n\`\`\`[a-zA-Z]*\n(.*?)\n\`\`\`', text, re.DOTALL)
+          
+          for filepath, content in matches:
+              filepath = filepath.strip()
+              os.makedirs(os.path.dirname(filepath), exist_ok=True) if os.path.dirname(filepath) else None
+              with open(filepath, 'w', encoding='utf-8') as f:
+                  f.write(content.strip())
+              print(f'Successfully updated: {filepath}')
+          "
+
+      - name: Commit and Push Changes
+        run: |
+          git config --global user.name "Gemini-AI-Agent"
+          git config --global user.email "ai-agent@github.com"
+          git add .
+          git commit -m "AI Auto-update: ${{ github.event.issue.title }}" || exit 0
+          git push
+
+      - name: Comment on Issue
+        uses: peter-evans/create-or-update-comment@v4
+        with:
+          issue-number: ${{ github.event.issue.number }}
+          body: |
+            ✅ **AI Agent Update Complete!**
+            আপনার নির্দেশ অনুযায়ী ওয়েবসাইট কোড আপডেট করা হয়েছে এবং Vercel-এ লাইভ বিল্ডিং শুরু হয়েছে।
